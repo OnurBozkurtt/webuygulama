@@ -1,0 +1,272 @@
+@import url("https://fonts.googleapis.com/css?family=Open+Sans:400,400i,600,700");
+
+
+body {
+    height: 100%;
+    width: 100%;
+    margin: 0;
+}
+
+html {
+    height: 100%;
+    width: 100%;
+}
+
+.map {
+    height: calc(93% - 40px);
+    width: 100%;
+    
+}
+
+ul {
+    list-style-type: none;
+    margin: 0;
+    padding: 0;
+    overflow: hidden;
+    background-color: #333;
+  }
+  
+  li {
+    float: left;
+  }
+  
+  li a {
+    display: block;
+    color: white;
+    text-align: center;
+    padding: 14px 16px;
+    text-decoration: none;
+  }
+  
+  li a:hover {
+    background-color: #111;
+  }
+
+  #form {
+    width: 40vw;
+    margin-top: 15px;
+    margin-left: 10px;
+    justify-content: center;
+    
+  }
+
+  .input-box {
+    position: relative;
+    margin: 10px 0;
+  }
+  .input-label1 {
+    color: #80868b;
+    font-size: 16px;
+    font-weight: 400;
+    max-width: calc(100% - (2 * 8px));
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+    left: 8px;
+    top: 13px;
+    padding: 0 8px;
+    transition: 250ms;
+    user-select: none;
+    pointer-events: none;
+    
+  }
+  .input-label2 {
+    color: #80868b;
+    font-size: 16px;
+    font-weight: 400;
+    max-width: calc(100% - (2 * 8px));
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+    left: 8px;
+    top: 13px;
+    padding: 0 8px;
+    transition: 250ms;
+    user-select: none;
+    pointer-events: none;
+    
+  }
+  .input-label3 {
+    color: #80868b;
+    font-size: 16px;
+    font-weight: 400;
+    max-width: calc(100% - (2 * 8px));
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+    left: 8px;
+    top: 13px;
+    padding: 0 8px;
+    transition: 250ms;
+    user-select: none;
+    pointer-events: none;
+    
+  }
+  .input-1 {
+    box-sizing: border-box;
+    height: 50px;
+    width: 48%;
+    border-radius: 9px;
+    color: #80868b;
+    border:  1px solid #dadce0;
+    padding: 13px 15px;
+    transition: 250ms;
+  }
+  .input-1:focus {
+    outline: none;
+    border: 2px solid #1a73e8;
+    transition: 250ms;
+  }
+
+  .btn {
+    margin-left: 130px;
+    background: #fff;
+    color: #333;
+    cursor: pointer;
+    border: none;
+    white-space: normal;
+    letter-spacing: 0.25px;
+    font-weight: 400;
+    font-size: 12px;
+    padding: 8px 16px;
+    border-radius: 6px;
+    line-height: 20px;
+    min-width: 88px;
+    transition: 250ms;
+  }
+  .btn:hover {
+    background:  #ddd;
+    transition: 250ms;
+  }
+  .btn:focus {
+    outline: none;
+  }
+
+  
+  .button1 {
+    background: #fff;
+    color: #333;
+    cursor: pointer;
+    border: none;
+    white-space: normal;
+    letter-spacing: 0.25px;
+    font-weight: 400;
+    font-size: 12px;
+    padding: 8px 16px;
+    border-radius: 6px;
+    line-height: 20px;
+    min-width: 88px;
+    transition: 250ms;
+  }
+  .button1:hover {
+    background:  #ddd;
+    transition: 250ms;
+  }
+  .button1:focus {
+    outline: none;
+  }
+  
+  .button2 {
+    background: #fff;
+    color: #333;
+    cursor: pointer;
+    border: none;
+    white-space: normal;
+    letter-spacing: 0.25px;
+    font-weight: 400;
+    font-size: 12px;
+    padding: 8px 16px;
+    border-radius: 6px;
+    line-height: 20px;
+    min-width: 88px;
+    transition: 250ms;
+  }
+  .button2:hover {
+    background:  #ddd;
+    transition: 250ms;
+  }
+  .button2:focus {
+    outline: none;
+  }
+  
+
+table { 
+	width: 150px; 
+	border-collapse: collapse; 
+	margin:50px auto;
+	}
+
+/* Zebra striping */
+tr:nth-of-type(odd) { 
+	background: #eee; 
+	}
+
+th { 
+	background: #207d34; 
+	color: white; 
+	font-weight: bold; 
+	}
+
+td, th { 
+	padding: 10px; 
+	border: 1px solid #ccc; 
+	text-align: left; 
+	font-size: 18px;
+	}
+  /* table.dataTable.no-footer{
+    padding-bottom: 290px;
+  } */
+
+/* 
+Max width before this PARTICULAR table gets nasty
+This query will take effect for any screen smaller than 760px
+and also iPads specifically.
+*/
+@media 
+only screen and (max-width: 760px),
+(min-device-width: 768px) and (max-device-width: 1024px)  {
+
+	table { 
+	  	width: 100%; 
+	}
+
+	/* Force table to not be like tables anymore */
+	table, thead, tbody, th, td, tr { 
+		display: block; 
+	}
+	
+	/* Hide table headers (but not display: none;, for accessibility) */
+	thead tr { 
+		position: absolute;
+		top: -9999px;
+		left: -9999px;
+	}
+	
+	tr { border: 1px solid #ccc; }
+	
+	td { 
+		/* Behave  like a "row" */
+		border: none;
+		border-bottom: 1px solid #eee; 
+		position: relative;
+		padding-left: 50%; 
+	}
+
+	td:before { 
+		/* Now like a table header */
+		position: absolute;
+		/* Top/left values mimic padding */
+		top: 6px;
+		left: 6px;
+		width: 45%; 
+		padding-right: 10px; 
+		white-space: nowrap;
+		/* Label the data */
+		content: attr(data-column);
+
+		color: #000;
+		font-weight: bold;
+	}
+  
+
+}
