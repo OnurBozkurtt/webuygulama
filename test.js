@@ -145,3 +145,88 @@
 //             }
 //         });
 // });
+
+
+
+
+ // fetch(url + "trackDraws?id=" + id)
+        //     .then(function (response) {
+        //         return response.json();
+        //     })
+        //     .then(function (result) {
+        //         var modifyData = new ol.geom.LineString(
+        //             JSON.parse(result.coordinates)
+        //         );
+        //         if (modifyData.length > 0) {
+        //             var coordinate = modifyData.map(function (modify) {
+        //                 var XY = modify.getGeometry().getCoordinates();
+        //                 for (var i = 0; i < XY.length; i++) {
+        //                     XY[i]
+        //                 }
+        //                 return [XY[i]]
+        //             })
+        //             const lineString = new ol.feature(new ol.geom.LineString(coordinate).transform(
+        //                 "EPSG:4326",
+        //                 map.getView().getProjection()
+        //             ))
+
+        //             lineString.setId(id);
+        //             vectorSource.addFeature(lineString);
+        //             map.getView().fit(lineString.getGeometry().getExtent());
+        //         }
+
+        //         modifyend fetch put?
+        //     });
+
+
+
+
+       //  handleClickModify = (id, username, number, coordinates) => {
+       //        var features = vector.getSource().getFeatures();
+       //        for (let i = 0; i < features.length; i++) {
+       //            let item = features[i];
+       //            if (item.getId() != id) {
+       //                vector.getSource().removeFeature(item);
+       //            }
+       //        }
+      
+       //        select.setActive(true);
+       //        modify.setActive(true);
+       //        select.getFeatures().push(vector.getSource().getFeatureById(id));
+      
+       //        modify.on('modifyend', function (e) {
+       //            var changedFeatures = e.features.getFeatures();
+       //            var newFeature = changedFeatures[changedFeatures.length - 1]
+      
+       //            var data = {
+       //                Id: newFeature.id,
+       //                username: newFeature.username,
+       //                number: newFeature.number,
+       //                coordinates: newFeature.getGeometry().getCoordinates(),
+       //            }
+       //            fetch("https://localhost:7130/api/UpdateDraw?id=" + data.Id, {
+       //                method: "PUT",
+       //                mode: "cors",
+       //                body: JSON.stringify(data),
+      
+       //                headers: {
+       //                    "Access-Control-Allow-Origin": "*",
+       //                    "Content-type": "application/json; charset=UTF-8",
+       //                },
+       //            })
+       //                .then(function (response) {
+       //                    if (response.ok) {
+       //                        console.log(response);
+       //                        return response.json();
+       //                    }
+       //                    return Promise.reject(response);
+       //                })
+       //                .then(function (data) {
+       //                    console.log(data);
+       //                })
+       //                .catch(function (error) {
+       //                    console.warn("Something went wrong.", error);
+       //                });
+       //        })
+       //    };
+      

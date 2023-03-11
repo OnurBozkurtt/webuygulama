@@ -1,6 +1,6 @@
 let map, draw, snap, source, layer, query;
-let Id, username, number, Coordinates, coordinates;
-let typeSelect, vectorSource;
+let Id, Name, number, Coordinates, coordinates;
+let typeSelect, vectorSource, vector;
 let select, modify, feature;
 
 const url = "https://localhost:7130/api/";
@@ -36,6 +36,13 @@ initializeMap = () => {
         }),
     });
 
+    vector = new ol.layer.Vector({
+        source: new ol.source.Vector(),
+
+    });
+
+    map.addLayer(vector);
+
     typeSelect = document.getElementById("type");
 
     fetch(url + "GetDraws", {
@@ -61,17 +68,13 @@ initializeMap = () => {
                     JSON.parse(data[i].coordinates)
                 );
 
-                vector = new ol.layer.Vector({
-                    source: new ol.source.Vector(),
-
-                });
-                map.addLayer(vector);
-
                 feature = new ol.Feature({
                     geometry: LineString,
                     name: "LineString",
                     data: data,
                 });
+
+                feature.setId(data[i].id);
 
                 vector.getSource().addFeature(feature);
             }
@@ -107,49 +110,73 @@ addInteraction = () => {
         Coordinates = event.feature.getGeometry().getCoordinates();
         draw.setActive(false);
 
-        jsPanel.create({
+        var panel = jsPanel.create({
             panelSize: {
-                width: () => window.innerWidth * 0.21,
-                height: "52vh",
+                width: () => window.innerWidth * 0.1,
+                height: "50vh",
+
             },
             headerTitle: "DrawInfo",
             theme: "1a41c0",
-            content: `<form id="form">
+            content: ` <form name="RegForm" id="form" method="post">
             <div>
-                    <label class="input-label1">Id</label>
-                    <div class="input-box">
-                      <input id='drawId' type="number" class="input-1" step="1" readonly placeholder="Id will generate automatically once submitted."/>
-                    </div>
-                    <label class="input-label1">Username</label>
-                    <div class="input-box">
-                      <input id='username' type="text" class="input-1" placeholder="UserName"/>
-                    </div>
-                    <label class="input-label2">Number</label>
-                    <div class="input-box">
-                      <input id=number type="number" class="input-1" placeholder="Number" 
-                      />
-                    </div>
-                    <label class="input-label3">Coordinates</label>
-                    <div class="input-box">
-                      <input id="coordinates" class="input-1" placeholder="${Coordinates}" readonly  />
-                    </div>
-                    <button id="Click1" type="button" class="btn btn-primary ">Button</button>
-                    <div/>
-                    <form/> `,
+              <label class="input-label1">Name</label>
+              <div class="input-box">
+                <input id='Name' type="text" class="input-1" required  placeholder="Name" />
+              </div>
+            
+        
+              <label class="input-label2">Number</label>
+              <div class="input-box">
+                <input id=number type="number" class="input-1" required  placeholder="Number" />
+              </div>
+        
+              <label class="input-label3">Coordinates</label>
+              <div class="input-box">
+                <textarea id="coordinates" class="textarea-1" placeholder="${Coordinates}" readonly></textarea>
+              </div>
+              <button id="Click1" type="button" class="btn-primary1">Button</button>
+              <div />
+              <form /> `,
+            position: "center",
         });
 
+        function validateForm() {
+            var name =
+                document.forms.RegForm.Name.value;
+            var number =
+                document.forms.RegForm.number.value;
+            var regName = /[^a-zA-Z]+/g;
+            var regnumber = /^\d+$/;                                                                            // Javascript reGex for Name validation
+
+            if (name == "" || regName.test(name)) {
+                window.alert("Please enter your name properly.");
+                name.focus();
+                return false;
+            }
+
+            if (number == "" || regnumber.test(number)) {
+                window.alert("Please enter your number.");
+                address.focus();
+                return false;
+            }
+
+            return true;
+        }
         document.getElementById("Click1").addEventListener("click", function (evt) {
             evt.preventDefault();
-            username = document.getElementById("username").value;
+            validateForm();
+            Name = document.getElementById("Name").value;
             number = document.getElementById("number").value;
             Coordinates = event.feature.getGeometry().getCoordinates();
 
             var data = {
                 Id: Id,
-                username: username,
+                Name: Name,
                 number: number,
                 coordinates: JSON.stringify(Coordinates).toString(),
             };
+
             fetch(url + "SendDraw", {
                 method: "POST",
                 mode: "cors",
@@ -162,8 +189,38 @@ addInteraction = () => {
             })
                 .then(function (response) {
                     if (response.ok) {
+                        panel.close();
+                        Toastify({
+                            text: "Draw added successfully",
+                            duration: 5000,
+                            destination: "https://github.com/apvarun/toastify-js",
+                            newWindow: true,
+                            close: true,
+                            gravity: "top",
+                            position: "right",
+                            stopOnFocus: true,
+                            style: {
+                                background: 'linear-gradient(-20deg, #00cdac 0%, #8ddad5 100%)'
+                            },
+                        }).showToast();
+                        vector.removeFeature(data.coordinates)
                         console.log(response);
                         return response.json();
+
+                    } else {
+                        Toastify({
+                            text: "Something went wrong. Please try again",
+                            duration: 5000,
+                            destination: "https://github.com/apvarun/toastify-js",
+                            newWindow: true,
+                            close: true,
+                            gravity: "top",
+                            position: "right",
+                            stopOnFocus: true,
+                            style: {
+                                background: 'linear-gradient(to right, #870000, #190a05)'
+                            },
+                        }).showToast();
                     }
                     return Promise.reject(response);
                 })
@@ -171,15 +228,16 @@ addInteraction = () => {
                     console.log(data);
                 })
                 .catch(function (error) {
-                    console.warn("Something went wrong.", error);
+                    console.log(error)
                 });
+
         });
     });
 
 };
 
 queryDrawing = () => {
-    jsPanel.create({
+    var panel = jsPanel.create({
         panelSize: {
             width: () => window.innerWidth * 0.7,
             height: "68vh",
@@ -196,8 +254,8 @@ queryDrawing = () => {
                         aria-sort="ascending" aria-label="Id: activate to sort column descending"
                         style="width: 131.163px;">Id</th>
                     <th class="sorting sorting_asc" tabindex="0" aria-controls="example" rowspan="1" colspan="1"
-                        aria-sort="ascending" aria-label="UserName: activate to sort column descending"
-                        style="width: 131.163px;">UserName</th>
+                        aria-sort="ascending" aria-label="Name: activate to sort column descending"
+                        style="width: 131.163px;">Name</th>
                     <th class="sorting" tabindex="0" aria-controls="example" rowspan="1" colspan="1"
                         aria-label="Number: activate to sort column ascending" style="width: 218.163px;">Number</th>
                  
@@ -224,43 +282,157 @@ queryDrawing = () => {
             displayData(data);
         });
 
-    handleClickModify = (id) => {
-        fetch(url + "trackDraws?id=" + id)
-            .then(function (response) {
-                return response.json();
-            })
-            .then(function (result) {
-                // var modifyData = new ol.geom.LineString(
-                //     JSON.parse(result.coordinates)
-                // );
-                // if (modifyData.length > 0) {
-                //     var coordinate = modifyData.map(function (modify) {
-                //         var XY = modify.getGeometry().getCoordinates();
-                //         for (var i = 0; i < XY.length; i++) {
-                //             XY[i]
-                //         }
-                //         return [XY[i]]
-                //     })
-                //     const lineString = new ol.feature(new ol.geom.LineString(coordinate).transform(
-                //         "EPSG:4326",
-                //         map.getView().getProjection()
-                //     ))
 
-                //     lineString.setId(id);
-                //     vectorSource.addFeature(lineString);
-                //     map.getView().fit(lineString.getGeometry().getExtent());
-                // }
+    handleClickModify = (id, name, number, coordinates) => {
+        panel.minimize()
+        var Features = vector.getSource().getFeatures();
+        for (let i = 0; i < Features.length; i++) {
+            let item = Features[i];
+            if (item.getId() != id) {
+                vector.getSource().removeFeature(item);
+            }
+        }
+        select.setActive(true);
+        modify.setActive(true);
+        select.getFeatures().push(vector.getSource().getFeatureById(id));
+        console.log(vector.getSource().getFeatureById(id).getGeometry().getCoordinates());
 
-                if (feature.values_.data[id].id == id) {
-                    select.setActive(feature.values_.data[id].coordinates);
-                    modify.setActive(feature.values_.data[id].coordinates);
-                }
-                //modifyend fetch put?
+
+        modify.on('modifyend', function (e) {
+
+            let modifyCoordinates = e.features.getArray()[0].getGeometry().getCoordinates();
+
+            var panel = jsPanel.create({
+                panelSize: {
+                    width: () => window.innerWidth * 0.21,
+                    height: "60vh",
+
+                },
+                headerTitle: "ModifyLine",
+                theme: "SUCCESS",
+                content: `<form id="form-modify">
+                    <label class="input-label1">Id</label>
+                    <div class="input-box">
+                      <input id='Idmodif' type="number" class="input-1" step="1" readonly value="${id}">
+                    </div>
+                    <label class="input-label1">Name</label>
+                    <div class="input-box">
+                      <input id='modifName' type="text" class="input-1" value="${name}">
+                    </div>
+                    <label class="input-label2">Number</label>
+                    <div class="input-box">
+                      <input id=modifnumber type="number" class="input-1" value="${number}">
+                    </div>
+                    <label class="input-label3">Coordinates</label>
+                    <div class="input-box">
+                      <textarea id="modifcoordinates" class="textarea-1" readonly >${modifyCoordinates}</textarea>
+                    </div>
+                    <button id="modifybtn" type="button" class="btn-primary1 ">Modify</button>
+                    <form/> `,
             });
+            function validateForm() {
+                var name =
+                    document.forms.RegForm.Name.value;
+                var number =
+                    document.forms.RegForm.number.value;
+                var regName = /[^a-zA-Z]+/g;
+                var regnumber = /^\d+$/;                                                                            // Javascript reGex for Name validation
+
+                if (name == "" || regName.test(name)) {
+                    window.alert("Please enter your name properly.");
+                    name.focus();
+                    return false;
+                }
+
+                if (number == "" || regnumber.test(number)) {
+                    window.alert("Please enter your number.");
+                    address.focus();
+                    return false;
+                }
+
+                return true;
+            }
+
+            document.getElementById("modifybtn").addEventListener("click", function () {
+                let id = document.getElementById("Idmodif").value;
+                let Name = document.getElementById("modifName").value;
+                let number = document.getElementById("modifnumber").value;
+                validateForm();
+                var data = {
+                    Id: id,
+                    Name: Name,
+                    number: number,
+                    coordinates: JSON.stringify(modifyCoordinates).toString()
+                }
+                fetch("https://localhost:7130/api/UpdateDraw?id=" + id, {
+                    method: "PUT",
+                    mode: "cors",
+                    body: JSON.stringify(data),
+
+                    headers: {
+                        "Access-Control-Allow-Origin": "*",
+                        "Content-type": "application/json; charset=UTF-8",
+                    },
+                })
+                    .then(function (response) {
+                        if (response.ok) {
+                            panel.close();
+                            Toastify({
+                                text: "Line modified successfully",
+                                duration: 5000,
+                                destination: "https://github.com/apvarun/toastify-js",
+                                newWindow: true,
+                                close: true,
+                                gravity: "top",
+                                position: "right",
+                                stopOnFocus: true,
+                                style: {
+                                    background: 'linear-gradient(-20deg, #00cdac 0%, #8ddad5 100%)'
+                                },
+                            }).showToast();
+                            modify.setActive(false);
+                            console.log(response);
+                            return response.json();
+                        } else {
+                            Toastify({
+                                text: "Modify is not successful. Please try again. ",
+                                duration: 5000,
+                                destination: "https://github.com/apvarun/toastify-js",
+                                newWindow: true,
+                                close: true,
+                                gravity: "top",
+                                position: "right",
+                                stopOnFocus: true,
+                                style: {
+                                    background: 'linear-gradient(to right, #870000, #190a05)'
+                                },
+                            }).showToast();
+
+                        }
+                        return Promise.reject(response);
+                    })
+                    .then(function (data) {
+                        console.log(data);
+                    })
+                    .catch(function (error) {
+
+                        console.warn("Something went wrong.", error);
+                    });
+            })
+
+        })
     };
 
-    handleClickUpdate = (id, username, number, coordinates) => {
-        jsPanel.create({
+    // handleFetchModify = (id, Name, number, coordinates) => {
+
+
+    // }
+    handleClickUpdate = (id, name, number, coordinates) => {
+        var panel = jsPanel.create({
+            panelSize: {
+                width: () => window.innerWidth * 0.1,
+                height: "60vh",
+            },
             headerTitle: "UpdateRow",
             theme: "1a41c0",
             content: `<form id="form">
@@ -268,9 +440,9 @@ queryDrawing = () => {
                 <div class="input-box">
                   <input id='Id' type="number" class="input-1" step="1" readonly placeholder="${id}"/>
                 </div>
-                <label class="input-label1">Username</label>
+                <label class="input-label1">name</label>
                 <div class="input-box">
-                  <input id='UpdateUsername' type="text" class="input-1" placeholder="${username}"/>
+                  <input id='Updatename' type="text" class="input-1" placeholder="${name}"/>
                 </div>
                 <label class="input-label2">Number</label>
                 <div class="input-box">
@@ -279,21 +451,43 @@ queryDrawing = () => {
                 </div>
                 <label class="input-label3">Coordinates</label>
                 <div class="input-box">
-                  <input id="coordinates" class="input-1" placeholder="${coordinates}" readonly />
+                <textarea id="coordinates" class="textarea-1" placeholder="${coordinates}" readonly  ></textarea>
                 </div>
-                <button id="updateClick" type="button" class="btn btn-primary ">Update</button>
+                <button id="updateClick" type="button" class="btn-primary1">Update</button>
                 <form/> `,
         });
 
+        function validateForm() {
+            var name =
+                document.forms.RegForm.Name.value;
+            var number =
+                document.forms.RegForm.number.value;
+            var regName = /[^a-zA-Z]+/g;
+            var regnumber = /^\d+$/;                                                                            // Javascript reGex for Name validation
+
+            if (name == "" || regName.test(name)) {
+                window.alert("Please enter your name properly.");
+                name.focus();
+                return false;
+            }
+
+            if (number == "" || regnumber.test(number)) {
+                window.alert("Please enter your number.");
+                address.focus();
+                return false;
+            }
+
+            return true;
+        }
         document
             .getElementById("updateClick")
             .addEventListener("click", function () {
-                username = document.getElementById("UpdateUsername").value;
-                number = document.getElementById("UpdateUsername").value;
-
+                name = document.getElementById("Updatename").value;
+                number = document.getElementById("UpdateNumber").value;
+                validateForm()
                 var data = {
                     Id: id,
-                    username: username,
+                    Name: name,
                     number: number,
                     coordinates: JSON.stringify(coordinates.toString()),
                 };
@@ -310,8 +504,36 @@ queryDrawing = () => {
                 })
                     .then(function (response) {
                         if (response.ok) {
+                            panel.close();
+                            Toastify({
+                                text: "Row updated successfully",
+                                duration: 5000,
+                                destination: "https://github.com/apvarun/toastify-js",
+                                newWindow: true,
+                                close: true,
+                                gravity: "top",
+                                position: "right",
+                                stopOnFocus: true,
+                                style: {
+                                    background: 'linear-gradient(-20deg, #00cdac 0%, #8ddad5 100%)'
+                                },
+                            }).showToast();
                             console.log(response);
                             return response.json();
+                        } else {
+                            Toastify({
+                                text: "Row is not updated successfully. Please try again.",
+                                duration: 5000,
+                                destination: "https://github.com/apvarun/toastify-js",
+                                newWindow: true,
+                                close: true,
+                                gravity: "top",
+                                position: "right",
+                                stopOnFocus: true,
+                                style: {
+                                    background: 'linear-gradient(to right, #870000, #190a05)'
+                                },
+                            }).showToast();
                         }
                         return Promise.reject(response);
                     })
@@ -319,15 +541,17 @@ queryDrawing = () => {
                         console.log(data);
                     })
                     .catch(function (error) {
+
                         console.warn("Something went wrong.", error);
                     });
             });
     };
 
-    handleClickDelete = (id, username, number, coordinates) => {
-        jsPanel.create({
-            resizeit: {
-                aspectRatio: "content",
+    handleClickDelete = (id, name, number, coordinates) => {
+        var panel = jsPanel.create({
+            panelSize: {
+                width: () => window.innerWidth * 0.1,
+                height: "60vh",
             },
             headerTitle: "DeleteRow",
             theme: "DANGER",
@@ -336,9 +560,9 @@ queryDrawing = () => {
                 <div class="input-box">
                   <input id='Id' type="number" class="input-1" step="1" readonly placeholder="${id}"/>
                 </div>
-                <label class="input-label1">Username</label>
+                <label class="input-label1">Name</label>
                 <div class="input-box">
-                  <input id='deleteUsername' type="text" class="input-1" placeholder="${username} "/>
+                  <input id='deleteName' type="text" class="input-1" placeholder="${name} "/>
                 </div>
                 <label class="input-label2">Number</label>
                 <div class="input-box">
@@ -346,17 +570,57 @@ queryDrawing = () => {
                 </div>
                 <label class="input-label3">Coordinates</label>
                 <div class="input-box">
-                  <input id="coordinates" class="input-1" placeholder="${coordinates}" readonly  />
+                <textarea id="coordinates" class="textarea-1" placeholder="${coordinates}" readonly  ></textarea>
                 </div>
-                <button onclick=handleFetchDelete('${id}') type="button" class="btn btn-anger ">Delete</button>
+                <button onclick=handleFetchDelete('${id}') type="button" class="btn-primary2">Delete</button>
                 <form/> `,
         });
         handleFetchDelete = () => {
             fetch("https://localhost:7130/api/DeleteDraw?id=" + id, {
                 method: "DELETE",
             })
-                .then((res) => res.json())
-                .then((res) => console.log(res));
+                .then(function (response) {
+                    if (response.ok) {
+                        panel.close();
+                        Toastify({
+                            text: "Row Deleted successfully",
+                            duration: 5000,
+                            destination: "https://github.com/apvarun/toastify-js",
+                            newWindow: true,
+                            close: true,
+                            gravity: "top",
+                            position: "right",
+                            stopOnFocus: true,
+                            style: {
+                                background: 'linear-gradient(-20deg, #00cdac 0%, #8ddad5 100%)'
+                            },
+                        }).showToast();
+                        console.log(response);
+                        return response.json();
+                    } else {
+                        Toastify({
+                            text: "Row is not deleted successfully. Please try again.",
+                            duration: 5000,
+                            destination: "https://github.com/apvarun/toastify-js",
+                            newWindow: true,
+                            close: true,
+                            gravity: "top",
+                            position: "right",
+                            stopOnFocus: true,
+                            style: {
+                                background: 'linear-gradient(to right, #870000, #190a05)'
+                            },
+                        }).showToast();
+                    }
+                    return Promise.reject(response);
+                })
+                .then(function (data) {
+                    console.log(data);
+                })
+                .catch(function (error) {
+
+                    console.warn("Something went wrong.", error);
+                });
         };
     };
 
@@ -366,15 +630,15 @@ queryDrawing = () => {
             html += "<tr>";
             html += `
                     <td>${dataInfo.id}</td>
-                    <td>${dataInfo.username}</td>
+                    <td>${dataInfo.name}</td>
                     <td>${dataInfo.number}</td>
 
                     <td>
                     <div style="
                     display: inline-grid;">
-                    <button onclick="handleClickModify('${dataInfo.id}','${dataInfo.username}','${dataInfo.number}','${dataInfo.coordinates}')" id="modifyGeo" type="button" class="btn btn-warning btn-xs dt-Modify"/>Modify  
-                    <button onclick="handleClickUpdate('${dataInfo.id}','${dataInfo.username}','${dataInfo.number}','${dataInfo.coordinates}')" id="updateRow" type="button" class="btn btn-primary btn-xs dt-edit"/>Edit 
-                    <button onclick="handleClickDelete('${dataInfo.id}','${dataInfo.username}','${dataInfo.number}','${dataInfo.coordinates}')" id="deleteRow" type="button" class="btn btn-danger btn-xs dt-delete"/>Delete
+                    <button onclick="handleClickModify('${dataInfo.id}','${dataInfo.name}','${dataInfo.number}','${dataInfo.coordinates}')" id="modifyGeo" type="button" class="btn btn-warning btn-xs dt-Modify"/>Modify  
+                    <button onclick="handleClickUpdate('${dataInfo.id}','${dataInfo.name}','${dataInfo.number}','${dataInfo.coordinates}')" id="updateRow" type="button" class="btn btn-primary btn-xs dt-edit"/>Edit 
+                    <button onclick="handleClickDelete('${dataInfo.id}','${dataInfo.name}','${dataInfo.number}','${dataInfo.coordinates}')" id="deleteRow" type="button" class="btn btn-danger btn-xs dt-delete"/>Delete
                     <div/>
                     </td>
                     `;
