@@ -1,11 +1,12 @@
 let map, draw, snap, source, layer, query;
 let Id, Name, number, Coordinates, coordinates;
 let typeSelect, vectorSource, vector;
-let select, modify, feature;
+let select, modify, feature, getDraw;
 
 const url = "https://localhost:7130/api/";
 
 initializeMap = () => {
+
     vectorSource = new ol.source.Vector();
 
     select = new ol.interaction.Select({
@@ -19,17 +20,27 @@ initializeMap = () => {
     layer = new ol.layer.Vector({
         source: source,
     });
+
+
     map = new ol.Map({
-        target: "map",
         layers: [
             new ol.layer.Tile({
                 source: new ol.source.OSM(),
             }),
-            layer,
             new ol.layer.Vector({
                 source: vectorSource,
             }),
+            new ol.layer.Tile({
+                extent: [-13884991, 2870341, -7455066, 6338219],
+                source: new ol.source.TileWMS({
+                    url: 'https://ahocevar.com/geoserver/wms',
+                    params: { 'LAYERS': 'topp:states', 'TILED': true },
+                    serverType: 'geoserver',
+                    transition: 0,
+                }),
+            }),
         ],
+        target: "map",
         view: new ol.View({
             center: [3875337.272593909, 4673762.797695817],
             zoom: 7,
@@ -45,43 +56,46 @@ initializeMap = () => {
 
     typeSelect = document.getElementById("type");
 
-    fetch(url + "GetDraws", {
-        method: "GET",
-        mode: "cors",
-        headers: {
-            Accept: "application/json",
-            "Access-Control-Allow-Origin": "*",
-            "Content-type": "application/json; charset=UTF-8",
-        },
-    })
-        .then(function (response) {
-            if (response.ok) {
-                return response.json();
-            }
-            return Promise.reject(response);
+    getDraw = () => {
+        fetch(url + "GetDraws", {
+            method: "GET",
+            mode: "cors",
+            headers: {
+                Accept: "application/json",
+                "Access-Control-Allow-Origin": "*",
+                "Content-type": "application/json; charset=UTF-8",
+            },
         })
-        .then(function (data) {
-            console.log(data);
+            .then(function (response) {
+                if (response.ok) {
+                    return response.json();
+                }
+                return Promise.reject(response);
+            })
+            .then(function (data) {
+                console.log(data);
 
-            for (var i = 0; i < data.length; i++) {
-                var LineString = new ol.geom.LineString(
-                    JSON.parse(data[i].coordinates)
-                );
+                for (var i = 0; i < data.length; i++) {
+                    var LineString = new ol.geom.LineString(
+                        JSON.parse(data[i].coordinates)
+                    );
 
-                feature = new ol.Feature({
-                    geometry: LineString,
-                    name: "LineString",
-                    data: data,
-                });
+                    feature = new ol.Feature({
+                        geometry: LineString,
+                        name: "LineString",
+                        data: data,
+                    });
 
-                feature.setId(data[i].id);
+                    feature.setId(data[i].id);
 
-                vector.getSource().addFeature(feature);
-            }
-        })
-        .catch(function (error) {
-            console.warn("Something went wrong.", error);
-        });
+                    vector.getSource().addFeature(feature);
+                }
+            })
+            .catch(function (error) {
+                console.warn("Something went wrong.", error);
+            });
+    }
+    getDraw();
 };
 
 addInteraction = () => {
@@ -128,7 +142,7 @@ addInteraction = () => {
         
               <label class="input-label2">Number</label>
               <div class="input-box">
-                <input id=number type="number" class="input-1" required  placeholder="Number" />
+                <input id=number type="text" class="input-1"  step="0.01" required  placeholder="Number" />
               </div>
         
               <label class="input-label3">Coordinates</label>
@@ -147,17 +161,39 @@ addInteraction = () => {
             var number =
                 document.forms.RegForm.number.value;
             var regName = /[^a-zA-Z]+/g;
-            var regnumber = /^\d+$/;                                                                            // Javascript reGex for Name validation
+            var regnumber = /[^0-9]+/g;
 
             if (name == "" || regName.test(name)) {
-                window.alert("Please enter your name properly.");
-                name.focus();
+                Toastify({
+                    text: "Please enter your name properly",
+                    duration: 5000,
+                    destination: "https://github.com/apvarun/toastify-js",
+                    newWindow: true,
+                    close: true,
+                    gravity: "top",
+                    position: "center",
+                    stopOnFocus: true,
+                    style: {
+                        background: 'linear-gradient(to right, #870000, #190a05)'
+                    },
+                }).showToast();
                 return false;
             }
 
             if (number == "" || regnumber.test(number)) {
-                window.alert("Please enter your number.");
-                address.focus();
+                Toastify({
+                    text: "Please enter your number properly",
+                    duration: 5000,
+                    destination: "https://github.com/apvarun/toastify-js",
+                    newWindow: true,
+                    close: true,
+                    gravity: "top",
+                    position: "center",
+                    stopOnFocus: true,
+                    style: {
+                        background: 'linear-gradient(to right, #870000, #190a05)'
+                    },
+                }).showToast();
                 return false;
             }
 
@@ -165,7 +201,7 @@ addInteraction = () => {
         }
         document.getElementById("Click1").addEventListener("click", function (evt) {
             evt.preventDefault();
-            validateForm();
+
             Name = document.getElementById("Name").value;
             number = document.getElementById("number").value;
             Coordinates = event.feature.getGeometry().getCoordinates();
@@ -177,59 +213,61 @@ addInteraction = () => {
                 coordinates: JSON.stringify(Coordinates).toString(),
             };
 
-            fetch(url + "SendDraw", {
-                method: "POST",
-                mode: "cors",
-                body: JSON.stringify(data),
+            if (validateForm() == true) {
+                fetch(url + "SendDraw", {
+                    method: "POST",
+                    mode: "cors",
+                    body: JSON.stringify(data),
 
-                headers: {
-                    "Access-Control-Allow-Origin": "*",
-                    "Content-type": "application/json; charset=UTF-8",
-                },
-            })
-                .then(function (response) {
-                    if (response.ok) {
-                        panel.close();
-                        Toastify({
-                            text: "Draw added successfully",
-                            duration: 5000,
-                            destination: "https://github.com/apvarun/toastify-js",
-                            newWindow: true,
-                            close: true,
-                            gravity: "top",
-                            position: "right",
-                            stopOnFocus: true,
-                            style: {
-                                background: 'linear-gradient(-20deg, #00cdac 0%, #8ddad5 100%)'
-                            },
-                        }).showToast();
-                        vector.removeFeature(data.coordinates)
-                        console.log(response);
-                        return response.json();
+                    headers: {
+                        "Access-Control-Allow-Origin": "*",
+                        "Content-type": "application/json; charset=UTF-8",
+                    },
+                })
+                    .then(function (response) {
+                        if (response.ok) {
+                            panel.close();
+                            Toastify({
+                                text: "Draw added successfully",
+                                duration: 5000,
+                                destination: "https://github.com/apvarun/toastify-js",
+                                newWindow: true,
+                                close: true,
+                                gravity: "top",
+                                position: "right",
+                                stopOnFocus: true,
+                                style: {
+                                    background: 'linear-gradient(90deg, rgba(0,71,4,1) 0%, rgba(9,121,24,1) 45%, rgba(0,255,68,1) 100%)'
+                                },
+                            }).showToast();
+                            vector.removeFeature(data.coordinates)
+                            console.log(response);
+                            return response.json();
 
-                    } else {
-                        Toastify({
-                            text: "Something went wrong. Please try again",
-                            duration: 5000,
-                            destination: "https://github.com/apvarun/toastify-js",
-                            newWindow: true,
-                            close: true,
-                            gravity: "top",
-                            position: "right",
-                            stopOnFocus: true,
-                            style: {
-                                background: 'linear-gradient(to right, #870000, #190a05)'
-                            },
-                        }).showToast();
-                    }
-                    return Promise.reject(response);
-                })
-                .then(function (data) {
-                    console.log(data);
-                })
-                .catch(function (error) {
-                    console.log(error)
-                });
+                        } else {
+                            Toastify({
+                                text: "Something went wrong. Please try again",
+                                duration: 5000,
+                                destination: "https://github.com/apvarun/toastify-js",
+                                newWindow: true,
+                                close: true,
+                                gravity: "top",
+                                position: "right",
+                                stopOnFocus: true,
+                                style: {
+                                    background: 'linear-gradient(to right, #870000, #190a05)'
+                                },
+                            }).showToast();
+                        }
+                        return Promise.reject(response);
+                    })
+                    .then(function (data) {
+                        console.log(data);
+                    })
+                    .catch(function (error) {
+                        console.log(error)
+                    });
+            }
 
         });
     });
@@ -290,18 +328,19 @@ queryDrawing = () => {
             let item = Features[i];
             if (item.getId() != id) {
                 vector.getSource().removeFeature(item);
+                select.setActive(true);
+                modify.setActive(true);
             }
         }
-        select.setActive(true);
-        modify.setActive(true);
         select.getFeatures().push(vector.getSource().getFeatureById(id));
         console.log(vector.getSource().getFeatureById(id).getGeometry().getCoordinates());
+        map.getView().setCenter(ol.extent.getCenter(vector.getSource().getFeatureById(id).getGeometry().getExtent()));
+        map.getView().setZoom(8);
 
 
         modify.on('modifyend', function (e) {
 
             let modifyCoordinates = e.features.getArray()[0].getGeometry().getCoordinates();
-
             var panel = jsPanel.create({
                 panelSize: {
                     width: () => window.innerWidth * 0.21,
@@ -310,7 +349,7 @@ queryDrawing = () => {
                 },
                 headerTitle: "ModifyLine",
                 theme: "SUCCESS",
-                content: `<form id="form-modify">
+                content: `<form name="RegForm" id="form-modify" method="put">
                     <label class="input-label1">Id</label>
                     <div class="input-box">
                       <input id='Idmodif' type="number" class="input-1" step="1" readonly value="${id}">
@@ -321,7 +360,7 @@ queryDrawing = () => {
                     </div>
                     <label class="input-label2">Number</label>
                     <div class="input-box">
-                      <input id=modifnumber type="number" class="input-1" value="${number}">
+                      <input id=modifnumber type="number"  step="0.01" class="input-1" value="${number}">
                     </div>
                     <label class="input-label3">Coordinates</label>
                     <div class="input-box">
@@ -332,21 +371,43 @@ queryDrawing = () => {
             });
             function validateForm() {
                 var name =
-                    document.forms.RegForm.Name.value;
+                    document.forms.RegForm.modifName.value;
                 var number =
-                    document.forms.RegForm.number.value;
+                    document.forms.RegForm.modifnumber.value;
                 var regName = /[^a-zA-Z]+/g;
-                var regnumber = /^\d+$/;                                                                            // Javascript reGex for Name validation
+                var regnumber = /[^0-9]+/g;
 
                 if (name == "" || regName.test(name)) {
-                    window.alert("Please enter your name properly.");
-                    name.focus();
+                    Toastify({
+                        text: "Please enter your name properly",
+                        duration: 5000,
+                        destination: "https://github.com/apvarun/toastify-js",
+                        newWindow: true,
+                        close: true,
+                        gravity: "top",
+                        position: "center",
+                        stopOnFocus: true,
+                        style: {
+                            background: 'linear-gradient(to right, #870000, #190a05)'
+                        },
+                    }).showToast();
                     return false;
                 }
 
                 if (number == "" || regnumber.test(number)) {
-                    window.alert("Please enter your number.");
-                    address.focus();
+                    Toastify({
+                        text: "Please enter your number properly",
+                        duration: 5000,
+                        destination: "https://github.com/apvarun/toastify-js",
+                        newWindow: true,
+                        close: true,
+                        gravity: "top",
+                        position: "center",
+                        stopOnFocus: true,
+                        style: {
+                            background: 'linear-gradient(to right, #870000, #190a05)'
+                        },
+                    }).showToast();
                     return false;
                 }
 
@@ -357,76 +418,72 @@ queryDrawing = () => {
                 let id = document.getElementById("Idmodif").value;
                 let Name = document.getElementById("modifName").value;
                 let number = document.getElementById("modifnumber").value;
-                validateForm();
                 var data = {
                     Id: id,
                     Name: Name,
                     number: number,
                     coordinates: JSON.stringify(modifyCoordinates).toString()
                 }
-                fetch("https://localhost:7130/api/UpdateDraw?id=" + id, {
-                    method: "PUT",
-                    mode: "cors",
-                    body: JSON.stringify(data),
+                if (validateForm() == true) {
+                    fetch("https://localhost:7130/api/UpdateDraw?id=" + id, {
+                        method: "PUT",
+                        mode: "cors",
+                        body: JSON.stringify(data),
 
-                    headers: {
-                        "Access-Control-Allow-Origin": "*",
-                        "Content-type": "application/json; charset=UTF-8",
-                    },
-                })
-                    .then(function (response) {
-                        if (response.ok) {
-                            panel.close();
-                            Toastify({
-                                text: "Line modified successfully",
-                                duration: 5000,
-                                destination: "https://github.com/apvarun/toastify-js",
-                                newWindow: true,
-                                close: true,
-                                gravity: "top",
-                                position: "right",
-                                stopOnFocus: true,
-                                style: {
-                                    background: 'linear-gradient(-20deg, #00cdac 0%, #8ddad5 100%)'
-                                },
-                            }).showToast();
-                            modify.setActive(false);
-                            console.log(response);
-                            return response.json();
-                        } else {
-                            Toastify({
-                                text: "Modify is not successful. Please try again. ",
-                                duration: 5000,
-                                destination: "https://github.com/apvarun/toastify-js",
-                                newWindow: true,
-                                close: true,
-                                gravity: "top",
-                                position: "right",
-                                stopOnFocus: true,
-                                style: {
-                                    background: 'linear-gradient(to right, #870000, #190a05)'
-                                },
-                            }).showToast();
-
-                        }
-                        return Promise.reject(response);
+                        headers: {
+                            "Access-Control-Allow-Origin": "*",
+                            "Content-type": "application/json; charset=UTF-8",
+                        },
                     })
-                    .then(function (data) {
-                        console.log(data);
-                    })
-                    .catch(function (error) {
+                        .then(function (response) {
+                            if (response.ok) {
+                                panel.close();
+                                Toastify({
+                                    text: "Line modified successfully",
+                                    duration: 5000,
+                                    destination: "https://github.com/apvarun/toastify-js",
+                                    newWindow: true,
+                                    close: true,
+                                    gravity: "top",
+                                    position: "right",
+                                    stopOnFocus: true,
+                                    style: {
+                                        background: 'linear-gradient(90deg, rgba(0,71,4,1) 0%, rgba(9,121,24,1) 45%, rgba(0,255,68,1) 100%)'
+                                    },
+                                }).showToast();
+                                console.log(response);
+                                return response.json();
+                            } else {
+                                Toastify({
+                                    text: "Modify is not successful. Please try again. ",
+                                    duration: 5000,
+                                    destination: "https://github.com/apvarun/toastify-js",
+                                    newWindow: true,
+                                    close: true,
+                                    gravity: "top",
+                                    position: "right",
+                                    stopOnFocus: true,
+                                    style: {
+                                        background: 'linear-gradient(to right, #870000, #190a05)'
+                                    },
+                                }).showToast();
 
-                        console.warn("Something went wrong.", error);
-                    });
+                            }
+                            return Promise.reject(response);
+                        })
+                        .then(function (data) {
+                            getDraw(data)
+                            console.log(data);
+                        })
+                        .catch(function (error) {
+                            console.warn("Something went wrong.", error);
+                        });
+                }
             })
 
         })
     };
 
-    // handleFetchModify = (id, Name, number, coordinates) => {
-
-
-    // }
     handleClickUpdate = (id, name, number, coordinates) => {
         var panel = jsPanel.create({
             panelSize: {
@@ -435,18 +492,18 @@ queryDrawing = () => {
             },
             headerTitle: "UpdateRow",
             theme: "1a41c0",
-            content: `<form id="form">
+            content: `<form name="RegForm" id="form" method="put">
                 <label class="input-label1">Id</label>
                 <div class="input-box">
-                  <input id='Id' type="number" class="input-1" step="1" readonly placeholder="${id}"/>
+                  <input id='Id' type="number" class="input-1"  step="1" readonly placeholder="${id}"/>
                 </div>
-                <label class="input-label1">name</label>
+                <label class="input-label1">Name</label>
                 <div class="input-box">
-                  <input id='Updatename' type="text" class="input-1" placeholder="${name}"/>
+                  <input id='Updatename' type="text" class="input-1" value="${name}" placeholder="${name}"/>
                 </div>
                 <label class="input-label2">Number</label>
                 <div class="input-box">
-                  <input id=UpdateNumber type="number" class="input-1" placeholder="${number}" 
+                  <input id=UpdateNumber type="number" class="input-1"  step="0.01" value="${number}" placeholder="${number}" 
                   />
                 </div>
                 <label class="input-label3">Coordinates</label>
@@ -459,21 +516,43 @@ queryDrawing = () => {
 
         function validateForm() {
             var name =
-                document.forms.RegForm.Name.value;
+                document.forms.RegForm.Updatename.value;
             var number =
-                document.forms.RegForm.number.value;
+                document.forms.RegForm.UpdateNumber.value;
             var regName = /[^a-zA-Z]+/g;
-            var regnumber = /^\d+$/;                                                                            // Javascript reGex for Name validation
+            var regnumber = /[^0-9]+/g;
 
             if (name == "" || regName.test(name)) {
-                window.alert("Please enter your name properly.");
-                name.focus();
+                Toastify({
+                    text: "Please enter your name properly",
+                    duration: 5000,
+                    destination: "https://github.com/apvarun/toastify-js",
+                    newWindow: true,
+                    close: true,
+                    gravity: "top",
+                    position: "center",
+                    stopOnFocus: true,
+                    style: {
+                        background: 'linear-gradient(to right, #870000, #190a05)'
+                    },
+                }).showToast();
                 return false;
             }
 
             if (number == "" || regnumber.test(number)) {
-                window.alert("Please enter your number.");
-                address.focus();
+                Toastify({
+                    text: "Please enter your number properly",
+                    duration: 5000,
+                    destination: "https://github.com/apvarun/toastify-js",
+                    newWindow: true,
+                    close: true,
+                    gravity: "top",
+                    position: "center",
+                    stopOnFocus: true,
+                    style: {
+                        background: 'linear-gradient(to right, #870000, #190a05)'
+                    },
+                }).showToast();
                 return false;
             }
 
@@ -484,66 +563,66 @@ queryDrawing = () => {
             .addEventListener("click", function () {
                 name = document.getElementById("Updatename").value;
                 number = document.getElementById("UpdateNumber").value;
-                validateForm()
                 var data = {
                     Id: id,
                     Name: name,
                     number: number,
                     coordinates: JSON.stringify(coordinates.toString()),
                 };
+                if (validateForm() == true) {
+                    fetch("https://localhost:7130/api/UpdateDraw?id=" + data.Id, {
+                        method: "PUT",
+                        mode: "cors",
+                        body: JSON.stringify(data),
 
-                fetch("https://localhost:7130/api/UpdateDraw?id=" + data.Id, {
-                    method: "PUT",
-                    mode: "cors",
-                    body: JSON.stringify(data),
-
-                    headers: {
-                        "Access-Control-Allow-Origin": "*",
-                        "Content-type": "application/json; charset=UTF-8",
-                    },
-                })
-                    .then(function (response) {
-                        if (response.ok) {
-                            panel.close();
-                            Toastify({
-                                text: "Row updated successfully",
-                                duration: 5000,
-                                destination: "https://github.com/apvarun/toastify-js",
-                                newWindow: true,
-                                close: true,
-                                gravity: "top",
-                                position: "right",
-                                stopOnFocus: true,
-                                style: {
-                                    background: 'linear-gradient(-20deg, #00cdac 0%, #8ddad5 100%)'
-                                },
-                            }).showToast();
-                            console.log(response);
-                            return response.json();
-                        } else {
-                            Toastify({
-                                text: "Row is not updated successfully. Please try again.",
-                                duration: 5000,
-                                destination: "https://github.com/apvarun/toastify-js",
-                                newWindow: true,
-                                close: true,
-                                gravity: "top",
-                                position: "right",
-                                stopOnFocus: true,
-                                style: {
-                                    background: 'linear-gradient(to right, #870000, #190a05)'
-                                },
-                            }).showToast();
-                        }
-                        return Promise.reject(response);
+                        headers: {
+                            "Access-Control-Allow-Origin": "*",
+                            "Content-type": "application/json; charset=UTF-8",
+                        },
                     })
-                    .then(function (data) {
-                        console.log(data);
-                    })
-                    .catch(function (error) {
+                        .then(function (response) {
+                            if (response.ok) {
+                                panel.close();
+                                Toastify({
+                                    text: "Row updated successfully",
+                                    duration: 5000,
+                                    destination: "https://github.com/apvarun/toastify-js",
+                                    newWindow: true,
+                                    close: true,
+                                    gravity: "top",
+                                    position: "right",
+                                    stopOnFocus: true,
+                                    style: {
+                                        background: 'linear-gradient(90deg, rgba(0,71,4,1) 0%, rgba(9,121,24,1) 45%, rgba(0,255,68,1) 100%)'
+                                    },
+                                }).showToast();
+                                console.log(response);
+                                return response.json();
+                            } else {
+                                Toastify({
+                                    text: "Row is not updated successfully. Please try again.",
+                                    duration: 5000,
+                                    destination: "https://github.com/apvarun/toastify-js",
+                                    newWindow: true,
+                                    close: true,
+                                    gravity: "top",
+                                    position: "right",
+                                    stopOnFocus: true,
+                                    style: {
+                                        background: 'linear-gradient(to right, #870000, #190a05)'
+                                    },
+                                }).showToast();
+                            }
+                            return Promise.reject(response);
+                        })
+                        .then(function (data) {
+                            console.log(data);
+                        })
+                        .catch(function (error) {
 
-                        console.warn("Something went wrong.", error);
-                    });
+                            console.warn("Something went wrong.", error);
+                        });
+                }
             });
     };
 
@@ -558,15 +637,15 @@ queryDrawing = () => {
             content: `<form id="form">
                 <label class="input-label1">Id</label>
                 <div class="input-box">
-                  <input id='Id' type="number" class="input-1" step="1" readonly placeholder="${id}"/>
+                  <input id='Id' type="number" class="input-1"  step="1" readonly placeholder="${id}"/>
                 </div>
                 <label class="input-label1">Name</label>
                 <div class="input-box">
-                  <input id='deleteName' type="text" class="input-1" placeholder="${name} "/>
+                  <input id='deleteName' type="text" class="input-1" readonly placeholder="${name} "/>
                 </div>
                 <label class="input-label2">Number</label>
                 <div class="input-box">
-                  <input id=deleteNumber type="number" class="input-1" placeholder="${number} " />
+                  <input id=deleteNumber type="number" class="input-1" readonly step="0.01" placeholder="${number} " />
                 </div>
                 <label class="input-label3">Coordinates</label>
                 <div class="input-box">
@@ -592,7 +671,7 @@ queryDrawing = () => {
                             position: "right",
                             stopOnFocus: true,
                             style: {
-                                background: 'linear-gradient(-20deg, #00cdac 0%, #8ddad5 100%)'
+                                background: 'linear-gradient(90deg, rgba(0,71,4,1) 0%, rgba(9,121,24,1) 45%, rgba(0,255,68,1) 100%)'
                             },
                         }).showToast();
                         console.log(response);
@@ -665,8 +744,5 @@ addDrawing = () => {
         addInteraction();
     };
 
-    document.getElementById("undo").addEventListener("click", function () {
-        draw.removeLastPoint();
-    });
     draw.setActive(true);
 };

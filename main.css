@@ -6,17 +6,17 @@
 
 body {
     height: 100%;
-    width: 100%;
+    width: 101%;
     margin: 0;
 }
 
 html {
     height: 100%;
-    width: 100%;
+    width: 99%;
 }
 
 .map {
-    height: calc(93% - 40px);
+    height: calc(94.3% - 40px);
     width: 100%;
     
 }
@@ -27,6 +27,10 @@ ul {
     padding: 0;
     overflow: hidden;
     background-color: #333;
+  }
+  .ulmenu{
+    margin-bottom: auto;
+    padding-left: 0;
   }
   
   li {
@@ -42,7 +46,7 @@ ul {
   }
 
   li a:hover {
-    background-color: #111;
+    background-color: rgb(153, 153, 153);
   }
 
   .jsPanel-depth-3{
@@ -150,6 +154,18 @@ ul {
     border: 2px solid #1a73e8;
     transition: 250ms;
   }
+
+  input::-webkit-outer-spin-button,
+  input::-webkit-inner-spin-button {
+    /* display: none; <- Crashes Chrome on hover */
+    -webkit-appearance: none;
+    margin: 0; /* <-- Apparently some margin are still there even though it's hidden */
+}
+
+  input[type=number] {
+    -moz-appearance:textfield; /* Firefox */
+}
+
   .textarea-1{
     width: 48%;
   height: 120px;
