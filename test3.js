@@ -2,24 +2,25 @@ let map, draw, snap, source, layer, query;
 let Id, Name, number, Coordinates, coordinates;
 let typeSelect, vectorSource, vector;
 let select, modify, feature, getDraw;
-let modifyCoordinates, handlePanelModify, panelmodify;
 
 const url = "https://localhost:7130/api/";
 
 initializeMap = () => {
+
     vectorSource = new ol.source.Vector();
 
     select = new ol.interaction.Select({
-        wrapX: false,
-    });
+        wrapX: false
+    })
     modify = new ol.interaction.Modify({
         features: select.getFeatures(),
-    });
+    })
     source = new ol.source.Vector({ wrapX: false });
 
     layer = new ol.layer.Vector({
         source: source,
     });
+
 
     map = new ol.Map({
         layers: [
@@ -32,9 +33,9 @@ initializeMap = () => {
             new ol.layer.Tile({
                 extent: [-13884991, 2870341, -7455066, 6338219],
                 source: new ol.source.TileWMS({
-                    url: "https://ahocevar.com/geoserver/wms",
-                    params: { LAYERS: "topp:states", TILED: true },
-                    serverType: "geoserver",
+                    url: 'https://ahocevar.com/geoserver/wms',
+                    params: { 'LAYERS': 'topp:states', 'TILED': true },
+                    serverType: 'geoserver',
                     transition: 0,
                 }),
             }),
@@ -48,6 +49,7 @@ initializeMap = () => {
 
     vector = new ol.layer.Vector({
         source: new ol.source.Vector(),
+
     });
 
     map.addLayer(vector);
@@ -92,7 +94,7 @@ initializeMap = () => {
             .catch(function (error) {
                 console.warn("Something went wrong.", error);
             });
-    };
+    }
     getDraw();
 };
 
@@ -126,6 +128,7 @@ addInteraction = () => {
             panelSize: {
                 width: () => window.innerWidth * 0.1,
                 height: "50vh",
+
             },
             headerTitle: "DrawInfo",
             theme: "1a41c0",
@@ -153,8 +156,10 @@ addInteraction = () => {
         });
 
         function validateForm() {
-            var name = document.forms.RegForm.Name.value;
-            var number = document.forms.RegForm.number.value;
+            var name =
+                document.forms.RegForm.Name.value;
+            var number =
+                document.forms.RegForm.number.value;
             var regName = /[^a-zA-Z]+/g;
             var regnumber = /[^0-9]+/g;
 
@@ -169,7 +174,7 @@ addInteraction = () => {
                     position: "center",
                     stopOnFocus: true,
                     style: {
-                        background: "linear-gradient(to right, #870000, #190a05)",
+                        background: 'linear-gradient(to right, #870000, #190a05)'
                     },
                 }).showToast();
                 return false;
@@ -186,7 +191,7 @@ addInteraction = () => {
                     position: "center",
                     stopOnFocus: true,
                     style: {
-                        background: "linear-gradient(to right, #870000, #190a05)",
+                        background: 'linear-gradient(to right, #870000, #190a05)'
                     },
                 }).showToast();
                 return false;
@@ -232,14 +237,14 @@ addInteraction = () => {
                                 position: "right",
                                 stopOnFocus: true,
                                 style: {
-                                    background:
-                                        "linear-gradient(90deg, rgba(0,71,4,1) 0%, rgba(9,121,24,1) 45%, rgba(0,255,68,1) 100%)",
+                                    background: 'linear-gradient(90deg, rgba(0,71,4,1) 0%, rgba(9,121,24,1) 45%, rgba(0,255,68,1) 100%)'
                                 },
                             }).showToast();
-                            getDraw();
+                            vector.removeFeature(data.coordinates)
                             console.log(response);
 
                             return response.json();
+
                         } else {
                             Toastify({
                                 text: "Something went wrong. Please try again",
@@ -251,21 +256,24 @@ addInteraction = () => {
                                 position: "right",
                                 stopOnFocus: true,
                                 style: {
-                                    background: "linear-gradient(to right, #870000, #190a05)",
+                                    background: 'linear-gradient(to right, #870000, #190a05)'
                                 },
                             }).showToast();
                         }
                         return Promise.reject(response);
                     })
                     .then(function (data) {
+                        getDraw();
                         console.log(data);
                     })
                     .catch(function (error) {
-                        console.log(error);
+                        console.log(error)
                     });
             }
+
         });
     });
+
 };
 
 queryDrawing = () => {
@@ -314,6 +322,176 @@ queryDrawing = () => {
             displayData(data);
         });
 
+
+    handleClickModify = (id, name, number, coordinates) => {
+        panel.close();
+        select.setActive(true);
+        modify.setActive(true);
+
+        // select.getFeatures().clear();
+        // vector.getSource().clear();
+        // vector.getSource().addFeature(feature);
+        var Features = vector.getSource().getFeatures();
+        for (let i = 0; i < Features.length; i++) {
+            let item = Features[i];
+            if (item.getId() != parseInt(id)) {
+                vector.getSource().removeFeature(item);
+                // select.getFeatures().push(vector.getSource().getFeatureById(id));
+            }
+        }
+        console.log(vector.getSource().getFeatureById(id).getGeometry().getCoordinates());
+        map.getView().setCenter(ol.extent.getCenter(vector.getSource().getFeatureById(id).getGeometry().getExtent()));
+        map.getView().setZoom(8);
+
+
+        modify.on('modifyend', function (e) {
+            // select.getFeatures().clear();
+            // vector.getSource().clear();
+            // vector.getSource().addFeature(feature);
+            let modifyCoordinates = e.features.getArray()[0].getGeometry().getCoordinates();
+            select.getFeatures().clear();
+            select.setActive(false);
+            modify.setActive(false);
+            select.getFeatures().clear();
+            var panelmodify = jsPanel.create({
+                panelSize: {
+                    width: () => window.innerWidth * 0.21,
+                    height: "60vh",
+
+                },
+                headerTitle: "ModifyLine",
+                theme: "SUCCESS",
+                content: `<form name="RegForm" id="form-modify" method="put">
+                    <label class="input-label1">Id</label>
+                    <div class="input-box">
+                      <input id='Idmodif' type="number" class="input-1" step="1" readonly value="${id}">
+                    </div>
+                    <label class="input-label1">Name</label>
+                    <div class="input-box">
+                      <input id="modifName" type="text" class="input-1" value="${name}">
+                    </div>
+                    <label class="input-label2">Number</label>
+                    <div class="input-box">
+                      <input id="modifnumber" type="number"  step="0.01" class="input-1" value="${number}">
+                    </div>
+                    <label class="input-label3">Coordinates</label>
+                    <div class="input-box">
+                      <textarea id="modifcoordinates" class="textarea-1" readonly >${modifyCoordinates}</textarea>
+                    </div>
+                    <button id="modifybtn" type="button" class="btn-primary1 ">Modify</button>
+                    <form/> `,
+            });
+
+            document.getElementById("modifybtn").addEventListener("click", function () {
+                let id = document.getElementById("Idmodif").value;
+                let Name = document.getElementById("modifName").value;
+                let number = document.getElementById("modifnumber").value;
+
+                if (validateForm(Name, number) == true) {
+
+                    var data = {
+                        Id: id,
+                        Name: Name,
+                        number: number,
+                        coordinates: JSON.stringify(modifyCoordinates).toString()
+                    }
+
+                    fetch("https://localhost:7130/api/UpdateDraw?id=" + id, {
+                        method: "PUT",
+                        body: JSON.stringify(data),
+
+                        headers: {
+                            "Access-Control-Allow-Origin": "*",
+                            "Content-type": "application/json; charset=UTF-8",
+                        },
+                    })
+                        .then(function (response) {
+                            if (response.ok) {
+                                Toastify({
+                                    text: "Line modified successfully",
+                                    duration: 5000,
+                                    destination: "https://github.com/apvarun/toastify-js",
+                                    newWindow: true,
+                                    close: true,
+                                    gravity: "top",
+                                    position: "right",
+                                    stopOnFocus: true,
+                                    style: {
+                                        background: 'linear-gradient(90deg, rgba(0,71,4,1) 0%, rgba(9,121,24,1) 45%, rgba(0,255,68,1) 100%)'
+                                    },
+                                }).showToast();
+                                console.log(response);
+                                panelmodify.close();
+
+                                var oldFeatures = vector.getSource().getFeatures();
+
+                                for (let i = 0; i < oldFeatures.length; i++) {
+                                    let item = oldFeatures[i];
+
+                                    vector.getSource().removeFeature(item);
+                                    // select.getFeatures().push(vector.getSource().getFeatureById(id));
+
+                                }
+                                // select.getFeatures().clear();
+                                // vector.getSource().removeFeature(feature);
+
+                                // var selectCollection = select.getFeatures().push(vector.getSource().getFeatureById(id));
+                                // if (selectCollection.length > 0) {
+
+                                //     vector.getSource().removeFeature(selectCollection.item(0));
+                                // }
+
+                                // modify.getFeatures().push(vector.getSource().removeFeature());
+                                // select.getFeatures().push(vector.getSource().clear());
+
+                                return response.json();
+                            } else {
+                                Toastify({
+                                    text: "Modify is not successful. Please try again. ",
+                                    duration: 5000,
+                                    destination: "https://github.com/apvarun/toastify-js",
+                                    newWindow: true,
+                                    close: true,
+                                    gravity: "top",
+                                    position: "right",
+                                    stopOnFocus: true,
+                                    style: {
+                                        background: 'linear-gradient(to right, #870000, #190a05)'
+                                    },
+                                }).showToast();
+
+                            }
+                            return Promise.reject(false);
+                        })
+                        .then(data => {
+
+                            for (var i = 0; i < data.length; i++) {
+                                var LineString = new ol.geom.LineString(
+                                    JSON.parse(data[i].coordinates)
+                                );
+
+                                var newFeature = new ol.Feature({
+                                    geometry: LineString,
+                                    name: "LineString",
+                                    data: data[i],
+                                });
+
+                                newFeature.setId(data[i].id);
+
+                                vector.getSource().addFeature(newFeature);
+                            }
+                        })
+                        .catch(function (error) {
+                            console.warn("Something went wrong.", error);
+                        });
+                }
+
+            })
+
+
+        })
+    };
+
     handleClickUpdate = (id, name, number, coordinates) => {
         var panel = jsPanel.create({
             panelSize: {
@@ -344,12 +522,15 @@ queryDrawing = () => {
                 <form/> `,
         });
 
+
+
         document
             .getElementById("updateClick")
             .addEventListener("click", function () {
                 let name = document.getElementById("Updatename").value;
                 let number = document.getElementById("UpdateNumber").value;
                 if (validateForm(Name, number) == true) {
+
                     var data = {
                         Id: id,
                         Name: name,
@@ -380,8 +561,7 @@ queryDrawing = () => {
                                     position: "right",
                                     stopOnFocus: true,
                                     style: {
-                                        background:
-                                            "linear-gradient(90deg, rgba(0,71,4,1) 0%, rgba(9,121,24,1) 45%, rgba(0,255,68,1) 100%)",
+                                        background: 'linear-gradient(90deg, rgba(0,71,4,1) 0%, rgba(9,121,24,1) 45%, rgba(0,255,68,1) 100%)'
                                     },
                                 }).showToast();
                                 console.log(response);
@@ -397,7 +577,7 @@ queryDrawing = () => {
                                     position: "right",
                                     stopOnFocus: true,
                                     style: {
-                                        background: "linear-gradient(to right, #870000, #190a05)",
+                                        background: 'linear-gradient(to right, #870000, #190a05)'
                                     },
                                 }).showToast();
                             }
@@ -407,6 +587,7 @@ queryDrawing = () => {
                             console.log(data);
                         })
                         .catch(function (error) {
+
                             console.warn("Something went wrong.", error);
                         });
                 }
@@ -458,8 +639,7 @@ queryDrawing = () => {
                             position: "right",
                             stopOnFocus: true,
                             style: {
-                                background:
-                                    "linear-gradient(90deg, rgba(0,71,4,1) 0%, rgba(9,121,24,1) 45%, rgba(0,255,68,1) 100%)",
+                                background: 'linear-gradient(90deg, rgba(0,71,4,1) 0%, rgba(9,121,24,1) 45%, rgba(0,255,68,1) 100%)'
                             },
                         }).showToast();
                         console.log(response);
@@ -475,7 +655,7 @@ queryDrawing = () => {
                             position: "right",
                             stopOnFocus: true,
                             style: {
-                                background: "linear-gradient(to right, #870000, #190a05)",
+                                background: 'linear-gradient(to right, #870000, #190a05)'
                             },
                         }).showToast();
                     }
@@ -485,173 +665,14 @@ queryDrawing = () => {
                     console.log(data);
                 })
                 .catch(function (error) {
+
                     console.warn("Something went wrong.", error);
                 });
         };
     };
 
-    handleClickModify = (id, name, number, coordinates) => {
-        panel.smallify();
-        select.setActive(true);
-        modify.setActive(true);
-
-        var Features = vector.getSource().getFeatures();
-        for (let i = 0; i < Features.length; i++) {
-            let item = Features[i];
-            if (item.getId() != parseInt(id)) {
-                vector.getSource().removeFeature(item);
-            }
-        }
-        console.log(
-            vector.getSource().getFeatureById(id).getGeometry().getCoordinates()
-        );
-        map
-            .getView()
-            .setCenter(
-                ol.extent.getCenter(
-                    vector.getSource().getFeatureById(id).getGeometry().getExtent()
-                )
-            );
-        map.getView().setZoom(8);
-
-        handlePanelModify = () => {
-            panelmodify = jsPanel.create({
-                panelSize: {
-                    width: () => window.innerWidth * 0.21,
-                    height: "60vh",
-                },
-                headerTitle: "ModifyLine",
-                theme: "#ffc107",
-                content: `<form name="RegForm" id="form-modify" >
-                <label class="input-label1">Id</label>
-                <div class="input-box">
-                  <input id='Idmodif' type="number" class="input-1" step="1" readonly value="${id}">
-                </div>
-                <label class="input-label1">Name</label>
-                <div class="input-box">
-                  <input id="modifName" type="text" class="input-1" value="${name}">
-                </div>
-                <label class="input-label2">Number</label>
-                <div class="input-box">
-                  <input id="modifnumber" type="number"  step="0.01" class="input-1" value="${number}">
-                </div>
-                <label class="input-label3">Coordinates</label>
-                <div class="input-box">
-                  <textarea id="modifcoordinates" class="textarea-1" readonly></textarea>
-                </div>
-                <button id="modifybtn" type="button" class="btn-primary3 ">Modify</button>
-                <form/> `,
-            });
-        };
-        handlePanelModify == false;
-
-        modify.on("modifyend", function (e) {
-            if (e.features.getArray()[0]) {
-                handlePanelModify();
-                let modifyCoordinates = e.features
-                    .getArray()[0]
-                    .getGeometry()
-                    .getCoordinates();
-                select.getFeatures().clear();
-                select.setActive(false);
-                modify.setActive(false);
-                document.getElementById("modifcoordinates").value = modifyCoordinates.toString();
-
-                document
-                    .getElementById("modifybtn")
-                    .addEventListener("click", function () {
-                        let id = document.getElementById("Idmodif").value;
-                        let Name = document.getElementById("modifName").value;
-                        let number = document.getElementById("modifnumber").value;
-
-                        if (validateForm(Name, number) == true) {
-                            var data = {
-                                Id: id,
-                                Name: Name,
-                                number: number,
-                                coordinates: JSON.stringify(modifyCoordinates).toString(),
-                            };
-
-                            fetch("https://localhost:7130/api/UpdateDraw?id=" + id, {
-                                method: "PUT",
-                                body: JSON.stringify(data),
-
-                                headers: {
-                                    "Access-Control-Allow-Origin": "*",
-                                    "Content-type": "application/json; charset=UTF-8",
-                                },
-                            })
-                                .then(function (response) {
-                                    if (response.ok) {
-                                        Toastify({
-                                            text: "Line modified successfully",
-                                            duration: 5000,
-                                            destination: "https://github.com/apvarun/toastify-js",
-                                            newWindow: true,
-                                            close: true,
-                                            gravity: "top",
-                                            position: "right",
-                                            stopOnFocus: true,
-                                            style: {
-                                                background:
-                                                    "linear-gradient(90deg, rgba(0,71,4,1) 0%, rgba(9,121,24,1) 45%, rgba(0,255,68,1) 100%)",
-                                            },
-                                        }).showToast();
-
-                                        panelmodify.close();
-                                        var oldFeatures = vector.getSource().getFeatures();
-                                        for (let i = 0; i < oldFeatures.length; i++) {
-                                            let item = oldFeatures[i];
-
-                                            vector.getSource().removeFeature(item);
-                                        }
-
-                                        handlePanelModify == false;
-                                        return response.json();
-                                    } else {
-                                        Toastify({
-                                            text: "Modify is not successful. Please try again. ",
-                                            duration: 5000,
-                                            destination: "https://github.com/apvarun/toastify-js",
-                                            newWindow: true,
-                                            close: true,
-                                            gravity: "top",
-                                            position: "right",
-                                            stopOnFocus: true,
-                                            style: {
-                                                background:
-                                                    "linear-gradient(to right, #870000, #190a05)",
-                                            },
-                                        }).showToast();
-                                    }
-                                    return Promise.reject(false);
-                                })
-                                .then((data) => {
-                                    for (var i = 0; i < data.length; i++) {
-                                        var LineString = new ol.geom.LineString(
-                                            JSON.parse(data[i].coordinates)
-                                        );
-
-                                        var newFeature = new ol.Feature({
-                                            geometry: LineString,
-                                            name: "LineString",
-                                            data: data[i],
-                                        });
-
-                                        newFeature.setId(data[i].id);
-
-                                        vector.getSource().addFeature(newFeature);
-                                    }
-                                })
-                                .catch(function (error) {
-                                    console.warn("Something went wrong.", error);
-                                });
-                        }
-                    });
-            }
-        });
-    };
     function validateForm(Name, number) {
+
         var regName = /[^a-zA-Z]+/g;
         var regnumber = /[^0-9]+/g;
 
@@ -666,7 +687,7 @@ queryDrawing = () => {
                 position: "center",
                 stopOnFocus: true,
                 style: {
-                    background: "linear-gradient(to right, #870000, #190a05)",
+                    background: 'linear-gradient(to right, #870000, #190a05)'
                 },
             }).showToast();
             return false;
@@ -683,7 +704,7 @@ queryDrawing = () => {
                 position: "center",
                 stopOnFocus: true,
                 style: {
-                    background: "linear-gradient(to right, #870000, #190a05)",
+                    background: 'linear-gradient(to right, #870000, #190a05)'
                 },
             }).showToast();
             return false;
@@ -691,6 +712,7 @@ queryDrawing = () => {
 
         return true;
     }
+
 
     async function displayData(data) {
         let html = "";
@@ -704,7 +726,7 @@ queryDrawing = () => {
                     <td>
                     <div style="
                     display: inline-grid;">
-                    <button onclick="handleClickModify('${dataInfo.id}','${dataInfo.name}','${dataInfo.number}','${dataInfo.coordinates}')" id=${dataInfo.id} type="button" class="btn btn-warning btn-xs dt-Modify"/>Modify  
+                    <button onclick="handleClickModify('${dataInfo.id}','${dataInfo.name}','${dataInfo.number}','${dataInfo.coordinates}')" id="modifyGeo" type="button" class="btn btn-warning btn-xs dt-Modify"/>Modify  
                     <button onclick="handleClickUpdate('${dataInfo.id}','${dataInfo.name}','${dataInfo.number}','${dataInfo.coordinates}')" id="updateRow" type="button" class="btn btn-primary btn-xs dt-edit"/>Edit 
                     <button onclick="handleClickDelete('${dataInfo.id}','${dataInfo.name}','${dataInfo.number}','${dataInfo.coordinates}')" id="deleteRow" type="button" class="btn btn-danger btn-xs dt-delete"/>Delete
                     <div/>
@@ -713,10 +735,16 @@ queryDrawing = () => {
             html += "</tr>";
         });
         document.querySelector("tbody").innerHTML = await html;
+        //
         $(document).ready(function () {
-            $("#example").DataTable({
+            var table = $("#example").DataTable({
                 responsive: true,
+                // select: {
+                //     style: "multi",
+                // },
             });
+
+            // var selData = table.rows({ selected: true }).data();
         });
     }
 };
